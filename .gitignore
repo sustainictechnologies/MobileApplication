@@ -1,0 +1,15 @@
+# ── Node / API Server ─────────────────────────────────────
+jalad_api_server/node_modules/
+jalad_api_server/.env
+
+# ── Flutter ───────────────────────────────────────────────
+jalad_application_1/.dart_tool/
+jalad_application_1/build/
+jalad_application_1/.flutter-plugins
+jalad_application_1/.flutter-plugins-dependencies
+jalad_application_1/.pub-cache/
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,17 @@
+Column(
+  children: [
+    Text("Welcome"),
+
+    Container(
+      padding: EdgeInsets.all(10),
+      color: Colors.blue,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("Left"),
+          Text("Right"),
+        ],
+      ),
+    ),
+  ],
+)
