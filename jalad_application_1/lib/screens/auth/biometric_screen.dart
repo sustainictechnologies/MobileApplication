@@ -64,12 +64,9 @@ class _BiometricScreenState extends State<BiometricScreen> {
   }
 
   Future<void> _onSuccess() async {
-    // Refresh the JWT so the 7-day window resets
-    try {
-      await AuthService.instance.refreshToken();
-    } catch (_) {
-      // Refresh failing is non-fatal — current token still valid
-    }
+    // Refresh token in background — don't block navigation
+    // If Render is waking up this can take 30s; user should not wait
+    AuthService.instance.refreshToken().catchError((_) {});
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/home');
   }
