@@ -121,7 +121,7 @@ class _MapScreenState extends State<MapScreen> {
                   initialZoom: 15.5,
                   maxZoom: 19,
                   minZoom: 10,
-                  onTap: (_, __) =>
+                  onTap: (_, _) =>
                       setState(() => _selectedStation = null),
                 ),
                 children: [

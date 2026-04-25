@@ -9,6 +9,18 @@ jalad_application_1/.flutter-plugins
 jalad_application_1/.flutter-plugins-dependencies
 jalad_application_1/.pub-cache/
 
+# ── IDE — IntelliJ / Android Studio ──────────────────────
+.idea/
+*.iml
+
+# ── Generated Flutter platform folders at repo root ───────
+# (created when Flutter is run from repo root instead of jalad_application_1/)
+/.dart_tool/
+/build/
+/android/
+/ios/
+/macos/
+
 # ── OS ────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

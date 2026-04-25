@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'core/theme/app_theme.dart';
+import 'screens/auth/biometric_screen.dart';
+import 'screens/auth/login_screen.dart';
 import 'screens/eco_impact/eco_impact_screen.dart';
 import 'screens/history/history_screen.dart';
-import 'screens/map/map_screen.dart';
-import 'screens/splash/splash_screen.dart';
-import 'screens/onboarding/intro_screen.dart';
-import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/map/map_screen.dart';
+import 'screens/onboarding/intro_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'screens/splash/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,9 +44,11 @@ class JalApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const IntroScreen(),
         '/login': (context) => const LoginScreen(),
+        '/biometric': (context) => const BiometricScreen(),
         '/home': (context) => const HomeScreen(),
         '/map': (context) => const MapScreen(),
         '/history': (context) => const HistoryScreen(),
+        '/profile': (context) => const ProfileScreen(),
         '/eco-impact': (context) => const EcoImpactScreen(),
       },
     );

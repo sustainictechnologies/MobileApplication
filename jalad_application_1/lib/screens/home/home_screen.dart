@@ -326,7 +326,7 @@ class _StatCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         child: Column(
           children: [
-            if (customIcon case final icon?) icon,
+            if (customIcon != null) customIcon!,
             const SizedBox(height: 8),
             Text(
               value,

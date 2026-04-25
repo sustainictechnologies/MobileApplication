@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../services/auth_service.dart';
+
 // ─────────────────────────────────────────────────────────────
 //  Sustainic Technologies — Splash Screen
 //
@@ -74,9 +76,21 @@ class _SplashScreenState extends State<SplashScreen>
     _buildAnimations();
     _ctrl.forward();
 
-    // Navigate after animation + short hold
-    Future.delayed(const Duration(milliseconds: _kTotalMs + 300), () {
-      if (mounted) Navigator.pushReplacementNamed(context, '/onboarding');
+    // Check auth state during animation, then navigate after hold
+    Future.delayed(const Duration(milliseconds: _kTotalMs + 300), () async {
+      if (!mounted) return;
+      final hasValidSession = await AuthService.instance.init();
+      if (!mounted) return;
+      if (hasValidSession) {
+        Navigator.pushReplacementNamed(context, '/biometric');
+      } else {
+        final isReturningUser = await AuthService.instance.hasStoredUser();
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(
+          context,
+          isReturningUser ? '/login' : '/onboarding',
+        );
+      }
     });
   }
 

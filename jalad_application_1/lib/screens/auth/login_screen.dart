@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -56,17 +57,15 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
         );
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
       } else {
         await AuthService.instance.register(
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
         );
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/home');
       }
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -89,8 +88,11 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildLogo(),
               const SizedBox(height: 40),
               _buildCard(),
-              const SizedBox(height: 24),
-              _buildDemoHint(),
+              // Demo hint only visible in debug builds — never ships to users
+              if (kDebugMode) ...[
+                const SizedBox(height: 24),
+                _buildDemoHint(),
+              ],
             ],
           ),
         ),
@@ -384,7 +386,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Demo hint ──────────────────────────────────────────────────────────────
+  // ── Demo hint (debug builds only) ─────────────────────────────────────────
 
   Widget _buildDemoHint() {
     return Container(
