@@ -102,6 +102,7 @@ class AuthService extends ChangeNotifier {
     );
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
+    debugPrint('Login response: $body');
     if (response.statusCode != 200) {
       throw Exception(body['error'] ?? 'Login failed');
     }
