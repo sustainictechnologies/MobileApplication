@@ -5,7 +5,8 @@ const cors    = require('cors');
 const path    = require('path');
 require('dotenv').config();
 
-const { fail } = require('./helpers');
+const { fail }        = require('./helpers');
+const { requireAuth } = require('./middleware/auth');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -14,13 +15,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth',     require('./routes/auth'));
-app.use('/api/stations', require('./routes/stations'));
-app.use('/api/users',    require('./routes/users'));
-app.use('/api/refills',  require('./routes/refills'));
-app.use('/api/confirm',  require('./routes/confirm'));
-app.use('/api',          require('./routes/health'));
+// ─── Public routes (no token needed) ─────────────────────────────────────────
+app.use('/api/auth',  require('./routes/auth'));
+app.use('/api',       require('./routes/health'));
+
+// ─── Protected routes (valid JWT required) ────────────────────────────────────
+app.use('/api/stations', requireAuth, require('./routes/stations'));
+app.use('/api/users',    requireAuth, require('./routes/users'));
+app.use('/api/refills',  requireAuth, require('./routes/refills'));
+app.use('/api/confirm',  requireAuth, require('./routes/confirm'));
 
 // ─── Fallback ─────────────────────────────────────────────────────────────────
 app.use((req, res) => {

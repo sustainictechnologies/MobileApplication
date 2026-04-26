@@ -1,8 +1,9 @@
-/// Base URL of the JALAD fake API server.
-/// Android emulator → use 10.0.2.2
-/// iOS simulator / desktop → use localhost
-/// Mobile web (phone browser) → use your machine's local IP
-const String kApiBase = 'http://192.168.1.5:3000/api';
+/// API base URL — injected at build time via --dart-define=API_BASE=http://x.x.x.x:3000/api
+/// Each developer sets their own local IP. See README for instructions.
+const String kApiBase = String.fromEnvironment(
+  'API_BASE',
+  defaultValue: 'https://mobileapplication-y4zc.onrender.com/api',
+);
 
 class AppConstants {
   AppConstants._();
@@ -44,7 +45,5 @@ class AppRoutes {
   static const String map = '/map';
   static const String history = '/history';
   static const String profile = '/profile';
-  static const String stationDetail = '/station/:id';
-  static const String refillSession = '/refill';
   static const String ecoImpact = '/eco-impact';
 }
