@@ -19,10 +19,10 @@ async function findRawByEmail(email) {
   return rows[0] ?? null;
 }
 
-async function create(id, name, email, passwordHash) {
+async function create(id, name, email, passwordHash, accountType = 'user') {
   const { rows } = await pool.query(
-    `INSERT INTO users (id, name, email, password_hash) VALUES ($1,$2,$3,$4) RETURNING *`,
-    [id, name, email, passwordHash]
+    `INSERT INTO users (id, name, email, password_hash, account_type) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+    [id, name, email, passwordHash, accountType]
   );
   return formatUser(rows[0]);
 }

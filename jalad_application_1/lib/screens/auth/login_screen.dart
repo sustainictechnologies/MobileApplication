@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   String? _errorMessage;
+  String _selectedAccountType = 'user';
 
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
@@ -62,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
+          accountType: _selectedAccountType,
         );
       }
       if (!mounted) return;
@@ -172,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildNameField(),
                   _buildEmailField(),
                   const SizedBox(height: 16),
+                  _buildAccountTypeDropdown(),
                   _buildPasswordField(),
                   const SizedBox(height: 16),
                   _buildConfirmPasswordField(),
@@ -229,6 +232,26 @@ class _LoginScreenState extends State<LoginScreen> {
             return null;
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildAccountTypeDropdown() {
+    if (_isLogin) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<String>(
+        value: _selectedAccountType,
+        decoration: const InputDecoration(
+          labelText: 'Account Type',
+          prefixIcon: Icon(Icons.account_circle_outlined),
+        ),
+        items: const [
+          DropdownMenuItem(value: 'user',       child: Text('User')),
+          DropdownMenuItem(value: 'dealer',     child: Text('Dealer')),
+          DropdownMenuItem(value: 'shopkeeper', child: Text('Shopkeeper')),
+        ],
+        onChanged: (v) => setState(() => _selectedAccountType = v ?? 'user'),
       ),
     );
   }

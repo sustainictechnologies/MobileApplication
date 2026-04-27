@@ -116,11 +116,12 @@ class AuthService extends ChangeNotifier {
     required String name,
     required String email,
     required String password,
+    String accountType = 'user',
   }) async {
     final response = await _client.post(
       Uri.parse('$kApiBase/auth/register'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name, 'email': email, 'password': password}),
+      body: jsonEncode({'name': name, 'email': email, 'password': password, 'account_type': accountType}),
     );
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;

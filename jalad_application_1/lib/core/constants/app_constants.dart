@@ -2,7 +2,7 @@
 /// Each developer sets their own local IP. See README for instructions.
 const String kApiBase = String.fromEnvironment(
   'API_BASE',
-  defaultValue: 'http://192.168.1.3:3000/api',
+  defaultValue: 'https://mobileapplication-y4zc.onrender.com/api',
 );
 
 class AppConstants {

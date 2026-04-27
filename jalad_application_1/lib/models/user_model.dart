@@ -2,6 +2,7 @@ class UserModel {
   final String id;
   final String name;
   final String email;
+  final String accountType;
   final String? avatarUrl;
   final double totalLitresSaved;
   final int totalRefills;
@@ -12,6 +13,7 @@ class UserModel {
     required this.id,
     required this.name,
     required this.email,
+    this.accountType = 'user',
     this.avatarUrl,
     required this.totalLitresSaved,
     required this.totalRefills,
@@ -28,6 +30,7 @@ class UserModel {
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
+      accountType: (json['account_type'] as String?) ?? 'user',
       avatarUrl: json['avatar_url'] as String?,
       totalLitresSaved: (json['total_litres_saved'] as num).toDouble(),
       totalRefills: json['total_refills'] as int,

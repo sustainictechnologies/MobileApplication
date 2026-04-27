@@ -58,11 +58,13 @@ router.post('/login', loginLimiter, async (req, res) => {
 
 // POST /api/auth/register
 router.post('/register', registerLimiter, async (req, res) => {
-  const { name, email, password } = req.body ?? {};
+  const { name, email, password, account_type } = req.body ?? {};
   if (!name || !email || !password) {
     log('POST', '/api/auth/register', 400);
     return fail(res, 'name, email, and password are required.', 400);
   }
+  const validTypes = ['user', 'dealer', 'shopkeeper'];
+  const accountType = validTypes.includes(account_type) ? account_type : 'user';
   try {
     const existing = await userQ.findRawByEmail(email);
     if (existing) {
@@ -71,7 +73,7 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
     const id   = `u_${uuidv4().slice(0, 8)}`;
-    const user = await userQ.create(id, name, email, hash);
+    const user = await userQ.create(id, name, email, hash, accountType);
     const token = signToken(id);
     log('POST', '/api/auth/register', 201);
     ok(res, { user, token }, 201);
