@@ -97,7 +97,7 @@ class HomeScreen extends StatelessWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-          onPressed: () {},
+          onPressed: () => Navigator.pushNamed(context, '/notifications'),
           tooltip: 'Notifications',
         ),
         IconButton(
