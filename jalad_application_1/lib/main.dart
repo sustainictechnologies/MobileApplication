@@ -9,6 +9,7 @@ import 'screens/history/history_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/map/map_screen.dart';
 import 'screens/onboarding/intro_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/splash/splash_screen.dart';
 
@@ -50,6 +51,7 @@ class JalApp extends StatelessWidget {
         '/history': (context) => const HistoryScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/eco-impact': (context) => const EcoImpactScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
       },
     );
   }

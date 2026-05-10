@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   String? _errorMessage;
+  String _selectedAccountType = 'user';
 
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
@@ -62,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
           name: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
+          accountType: _selectedAccountType,
         );
       }
       if (!mounted) return;
@@ -172,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildNameField(),
                   _buildEmailField(),
                   const SizedBox(height: 16),
+                  _buildAccountTypeDropdown(),
                   _buildPasswordField(),
                   const SizedBox(height: 16),
                   _buildConfirmPasswordField(),
@@ -209,26 +212,42 @@ class _LoginScreenState extends State<LoginScreen> {
   // ── Form fields ────────────────────────────────────────────────────────────
 
   Widget _buildNameField() {
-    return AnimatedCrossFade(
-      duration: const Duration(milliseconds: 280),
-      crossFadeState: _isLogin ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-      firstChild: const SizedBox.shrink(),
-      secondChild: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: TextFormField(
-          controller: _nameCtrl,
-          textInputAction: TextInputAction.next,
-          decoration: const InputDecoration(
-            labelText: 'Full Name',
-            hintText: 'Your name',
-            prefixIcon: Icon(Icons.person_outline_rounded),
-          ),
-          validator: (v) {
-            if (_isLogin) return null;
-            if (v == null || v.trim().isEmpty) return 'Name is required';
-            return null;
-          },
+    if (_isLogin) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: _nameCtrl,
+        textInputAction: TextInputAction.next,
+        decoration: const InputDecoration(
+          labelText: 'Full Name',
+          hintText: 'Your name',
+          prefixIcon: Icon(Icons.person_outline_rounded),
         ),
+        validator: (v) {
+          if (_isLogin) return null;
+          if (v == null || v.trim().isEmpty) return 'Name is required';
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildAccountTypeDropdown() {
+    if (_isLogin) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<String>(
+        value: _selectedAccountType,
+        decoration: const InputDecoration(
+          labelText: 'Account Type',
+          prefixIcon: Icon(Icons.account_circle_outlined),
+        ),
+        items: const [
+          DropdownMenuItem(value: 'user',       child: Text('User')),
+          DropdownMenuItem(value: 'dealer',     child: Text('Dealer')),
+          DropdownMenuItem(value: 'shopkeeper', child: Text('Shopkeeper')),
+        ],
+        onChanged: (v) => setState(() => _selectedAccountType = v ?? 'user'),
       ),
     );
   }
@@ -277,35 +296,31 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildConfirmPasswordField() {
-    return AnimatedCrossFade(
-      duration: const Duration(milliseconds: 280),
-      crossFadeState: _isLogin ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-      firstChild: const SizedBox.shrink(),
-      secondChild: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: TextFormField(
-          controller: _confirmCtrl,
-          obscureText: _obscureConfirm,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            labelText: 'Confirm Password',
-            hintText: '••••••',
-            prefixIcon: const Icon(Icons.lock_person_outlined),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                size: 20,
-              ),
-              onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+    if (_isLogin) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: _confirmCtrl,
+        obscureText: _obscureConfirm,
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(
+          labelText: 'Confirm Password',
+          hintText: '••••••',
+          prefixIcon: const Icon(Icons.lock_person_outlined),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+              size: 20,
             ),
+            onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
           ),
-          validator: (v) {
-            if (_isLogin) return null;
-            if (v == null || v.isEmpty) return 'Please confirm your password';
-            if (v != _passwordCtrl.text) return 'Passwords do not match';
-            return null;
-          },
         ),
+        validator: (v) {
+          if (_isLogin) return null;
+          if (v == null || v.isEmpty) return 'Please confirm your password';
+          if (v != _passwordCtrl.text) return 'Passwords do not match';
+          return null;
+        },
       ),
     );
   }
