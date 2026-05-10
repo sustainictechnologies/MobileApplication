@@ -3,6 +3,7 @@ class UserModel {
   final String name;
   final String email;
   final String accountType;
+  final String? qrCode;
   final String? avatarUrl;
   final double totalLitresSaved;
   final int totalRefills;
@@ -14,6 +15,7 @@ class UserModel {
     required this.name,
     required this.email,
     this.accountType = 'user',
+    this.qrCode,
     this.avatarUrl,
     required this.totalLitresSaved,
     required this.totalRefills,
@@ -31,6 +33,7 @@ class UserModel {
       name: json['name'] as String,
       email: json['email'] as String,
       accountType: (json['account_type'] as String?) ?? 'user',
+      qrCode: json['qr_code'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       totalLitresSaved: (json['total_litres_saved'] as num).toDouble(),
       totalRefills: json['total_refills'] as int,
@@ -43,6 +46,7 @@ class UserModel {
         'id': id,
         'name': name,
         'email': email,
+        if (qrCode != null) 'qr_code': qrCode,
         'avatar_url': avatarUrl,
         'total_litres_saved': totalLitresSaved,
         'total_refills': totalRefills,
@@ -54,6 +58,7 @@ class UserModel {
     String? id,
     String? name,
     String? email,
+    String? qrCode,
     String? avatarUrl,
     double? totalLitresSaved,
     int? totalRefills,
@@ -64,6 +69,7 @@ class UserModel {
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      qrCode: qrCode ?? this.qrCode,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       totalLitresSaved: totalLitresSaved ?? this.totalLitresSaved,
       totalRefills: totalRefills ?? this.totalRefills,

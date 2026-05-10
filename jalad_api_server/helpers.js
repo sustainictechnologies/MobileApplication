@@ -44,6 +44,7 @@ function formatUser(row) {
     name:               row.name,
     email:              row.email,
     account_type:       row.account_type ?? 'user',
+    qr_code:            row.qr_code,
     avatar_url:         row.avatar_url,
     total_litres_saved: parseFloat(row.total_litres_saved),
     total_refills:      parseInt(row.total_refills),
