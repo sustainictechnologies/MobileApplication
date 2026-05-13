@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/app_bottom_nav.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -25,6 +26,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Refill History')),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 2),
       body: FutureBuilder<List<RefillRecord>>(
         future: _historyFuture,
         builder: (context, snapshot) {

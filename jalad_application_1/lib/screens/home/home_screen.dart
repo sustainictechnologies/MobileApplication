@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/eco_icons.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,8 +16,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final user = AuthService.instance.currentUser;
@@ -40,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: _buildRefillFAB(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 
@@ -120,135 +118,135 @@ class _HomeScreenState extends State<HomeScreen> {
     final litres    = user?.totalLitresSaved ?? 0.0;
     final refills   = user?.totalRefills ?? 0;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: SizedBox(
-        width: double.infinity,
-        child: Stack(
-          children: [
-            // Background: water drop image
-            Positioned.fill(
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1FA971), Color(0xFF34D399)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
+        children: [
+          // Water drop image floats at top-right — doesn't affect text layout
+          Positioned(
+            right: -8,
+            top: 0,
+            child: Opacity(
+              opacity: 0.92,
               child: Image.asset(
                 'assets/images/water_drop.png',
-                fit: BoxFit.cover,
+                width: 140,
+                height: 190,
+                fit: BoxFit.contain,
+                alignment: Alignment.topRight,
               ),
             ),
-            // Gradient overlay so text stays readable
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF1FA971).withValues(alpha: 0.88),
-                      const Color(0xFF34D399).withValues(alpha: 0.72),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+          ),
+          // Text on top — full width, no sharing with image
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back,',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
-              ),
+                Text(
+                  '$firstName!',
+                  style: GoogleFonts.poppins(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Ready to refill? 💧',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Stats pill
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.water_drop_rounded,
+                          color: Color(0xFF29B6F6), size: 22),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${litres.toStringAsFixed(1)} L',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Saved',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        width: 1,
+                        height: 30,
+                        color: Colors.grey.shade300,
+                      ),
+                      const Icon(Icons.refresh_rounded,
+                          color: Color(0xFF1FA971), size: 22),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$refills',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Refills done',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            // Foreground: text + stats
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back,',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  Text(
-                    '$firstName!',
-                    style: GoogleFonts.poppins(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Ready to refill? 💧',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Stats pill
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.water_drop_rounded,
-                            color: Color(0xFF29B6F6), size: 22),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${litres.toStringAsFixed(1)} L',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'Saved',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 12),
-                          width: 1,
-                          height: 30,
-                          color: Colors.grey.shade300,
-                        ),
-                        const Icon(Icons.refresh_rounded,
-                            color: Color(0xFF1FA971), size: 22),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$refills',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'Refills done',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -433,30 +431,52 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () => _showQrCode(context),
       child: Container(
-        width: 78,
-        height: 78,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1565C0),
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFFE1F5FE), Color(0xFF81D4FA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Color(0x441565C0),
-              blurRadius: 16,
-              offset: Offset(0, 6),
+              color: const Color(0xFF81D4FA).withValues(alpha: 0.55),
+              blurRadius: 18,
+              spreadRadius: 2,
+              offset: const Offset(0, 7),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.40),
+              blurRadius: 5,
+              offset: const Offset(-2, -2),
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            const Icon(Icons.water_drop_rounded, color: Colors.white, size: 28),
-            const SizedBox(height: 2),
-            Text(
-              'Refill',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+            // Glint highlight
+            Positioned(
+              top: 9,
+              left: 11,
+              child: Container(
+                width: 20,
+                height: 11,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withValues(alpha: 0.38),
+                ),
+              ),
+            ),
+            Center(
+              child: Text(
+                'Refill',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF01579B),
+                ),
               ),
             ),
           ],
@@ -560,56 +580,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Bottom nav ─────────────────────────────────────────────────────────────
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (i) {
-        setState(() => _currentIndex = i);
-        switch (i) {
-          case 1:
-            Navigator.pushNamed(context, AppRoutes.map);
-            break;
-          case 2:
-            Navigator.pushNamed(context, AppRoutes.history);
-            break;
-          case 3:
-            Navigator.pushNamed(context, AppRoutes.ecoImpact);
-            break;
-        }
-      },
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.textHint,
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      elevation: 12,
-      selectedLabelStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
-      unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home_rounded),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.location_on_outlined),
-          activeIcon: Icon(Icons.location_on_rounded),
-          label: 'Stations',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: 'History',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.eco_outlined),
-          activeIcon: Icon(Icons.eco_rounded),
-          label: 'Impact',
-        ),
-      ],
-    );
-  }
 }
 
 // ─── QR Code bottom sheet ─────────────────────────────────────────────────────

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
 import '../../core/theme/app_theme.dart';
 import '../../models/water_station.dart';
 import '../../services/water_station_service.dart';
+import '../../widgets/app_bottom_nav.dart';
 import 'station_detail_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -23,23 +25,216 @@ class _MapScreenState extends State<MapScreen> {
   Future<List<WaterStation>>? _stationsFuture;
 
   WaterStation? _selectedStation;
+  LatLng? _userLoc;
 
-  // Mock user location (Bandra, Mumbai)
-  static const LatLng _userLoc = LatLng(19.0596, 72.8295);
+  // Filter state
+  bool _onlineOnly = false;
+  String? _qualityFilter; // null = all, 'Excellent', 'Good'
+  String _sortBy = 'distance'; // 'distance', 'rating', 'price'
+
+  // Fallback: Kolhapur city centre
+  static const LatLng _fallback = LatLng(16.7050, 74.2433);
 
   @override
   void initState() {
     super.initState();
-    _loadStations();
+    _initLocation();
   }
 
-  void _loadStations() {
+  Future<void> _initLocation() async {
+    try {
+      // Check if location service is enabled
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _loadStations(_fallback);
+        return;
+      }
+
+      // Check / request permission
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _loadStations(_fallback);
+        return;
+      }
+
+      // Get position
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      final loc = LatLng(pos.latitude, pos.longitude);
+      setState(() => _userLoc = loc);
+      _mapController.move(loc, 15.5);
+      _loadStations(loc);
+    } catch (_) {
+      _loadStations(_fallback);
+    }
+  }
+
+  void _loadStations(LatLng loc) {
     setState(() {
       _stationsFuture = WaterStationService.instance.getNearbyStations(
-        latitude: _userLoc.latitude,
-        longitude: _userLoc.longitude,
+        latitude: loc.latitude,
+        longitude: loc.longitude,
       );
     });
+  }
+
+  void _goToMyLocation() {
+    final loc = _userLoc ?? _fallback;
+    _mapController.move(loc, 15.5);
+  }
+
+  List<WaterStation> _applyFilters(List<WaterStation> stations) {
+    var list = stations.where((s) {
+      if (_onlineOnly && !s.isOnline) { return false; }
+      if (_qualityFilter != null &&
+          s.waterQuality.label.toLowerCase() !=
+              _qualityFilter!.toLowerCase()) { return false; }
+      return true;
+    }).toList();
+
+    switch (_sortBy) {
+      case 'rating':
+        list.sort((a, b) => b.rating.compareTo(a.rating));
+      case 'price':
+        list.sort((a, b) => a.pricePerLitre.compareTo(b.pricePerLitre));
+      default:
+        list.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+    }
+    return list;
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Filter Stations',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+
+              // Online only toggle
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Online stations only',
+                      style: GoogleFonts.poppins(fontSize: 14)),
+                  Switch(
+                    value: _onlineOnly,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (v) {
+                      setSheet(() => _onlineOnly = v);
+                      setState(() => _onlineOnly = v);
+                    },
+                  ),
+                ],
+              ),
+              const Divider(),
+
+              // Water quality
+              Text('Water Quality',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13, fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _filterChip(ctx, setSheet, 'All', null),
+                  _filterChip(ctx, setSheet, 'Excellent', 'Excellent'),
+                  _filterChip(ctx, setSheet, 'Good', 'Good'),
+                ],
+              ),
+              const Divider(),
+
+              // Sort by
+              Text('Sort By',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13, fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  _sortChip(ctx, setSheet, 'Distance', 'distance'),
+                  _sortChip(ctx, setSheet, 'Rating', 'rating'),
+                  _sortChip(ctx, setSheet, 'Price', 'price'),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Apply button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text('Apply',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _filterChip(BuildContext ctx, StateSetter setSheet,
+      String label, String? value) {
+    final selected = _qualityFilter == value;
+    return ChoiceChip(
+      label: Text(label, style: GoogleFonts.poppins(fontSize: 12)),
+      selected: selected,
+      selectedColor: AppColors.primary,
+      labelStyle: TextStyle(
+          color: selected ? Colors.white : AppColors.textPrimary),
+      onSelected: (_) {
+        setSheet(() => _qualityFilter = value);
+        setState(() => _qualityFilter = value);
+      },
+    );
+  }
+
+  Widget _sortChip(BuildContext ctx, StateSetter setSheet,
+      String label, String value) {
+    final selected = _sortBy == value;
+    return ChoiceChip(
+      label: Text(label, style: GoogleFonts.poppins(fontSize: 12)),
+      selected: selected,
+      selectedColor: AppColors.primary,
+      labelStyle: TextStyle(
+          color: selected ? Colors.white : AppColors.textPrimary),
+      onSelected: (_) {
+        setSheet(() => _sortBy = value);
+        setState(() => _sortBy = value);
+      },
+    );
   }
 
   @override
@@ -49,12 +244,16 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   // ── Tap a station (from pin or list card) ──────────────────
+  // Card tap — just move map to station, no popup
+  void _focusStation(WaterStation station) {
+    setState(() => _selectedStation = station);
+    _mapController.move(LatLng(station.latitude, station.longitude), 16.5);
+  }
+
+  // Pin tap — move map AND show info sheet
   void _selectStation(WaterStation station, List<WaterStation> all) {
     setState(() => _selectedStation = station);
-    _mapController.move(
-      LatLng(station.latitude, station.longitude),
-      16.5,
-    );
+    _mapController.move(LatLng(station.latitude, station.longitude), 16.5);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -75,10 +274,11 @@ class _MapScreenState extends State<MapScreen> {
 
   // ── Build map markers ──────────────────────────────────────
   List<Marker> _buildMarkers(List<WaterStation> stations) {
+    final loc = _userLoc ?? _fallback;
     return [
       // User location
       Marker(
-        point: _userLoc,
+        point: loc,
         width: 28,
         height: 28,
         child: const _UserLocationMarker(),
@@ -104,6 +304,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       body: FutureBuilder<List<WaterStation>>(
         future: _stationsFuture ?? Future.value([]),
         builder: (context, snapshot) {
@@ -117,7 +318,7 @@ class _MapScreenState extends State<MapScreen> {
               FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
-                  initialCenter: _userLoc,
+                  initialCenter: _userLoc ?? _fallback,
                   initialZoom: 15.5,
                   maxZoom: 19,
                   minZoom: 10,
@@ -132,7 +333,7 @@ class _MapScreenState extends State<MapScreen> {
                     maxNativeZoom: 19,
                   ),
                   if (stations.isNotEmpty)
-                    MarkerLayer(markers: _buildMarkers(stations)),
+                    MarkerLayer(markers: _buildMarkers(_applyFilters(stations))),
                 ],
               ),
 
@@ -167,7 +368,10 @@ class _MapScreenState extends State<MapScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
-                    child: _TopBar(stationCount: stations.length),
+                    child: _TopBar(
+                      stationCount: stations.length,
+                      onFilterTap: () => _showFilterSheet(context),
+                    ),
                   ),
                 ),
               ),
@@ -201,9 +405,9 @@ class _MapScreenState extends State<MapScreen> {
                   left: 0,
                   right: 0,
                   child: _BottomStationPanel(
-                    stations: stations,
+                    stations: _applyFilters(stations),
                     selectedId: _selectedStation?.id,
-                    onTap: (s) => _selectStation(s, stations),
+                    onTap: (s) => _focusStation(s),
                   ),
                 ),
 
@@ -215,8 +419,7 @@ class _MapScreenState extends State<MapScreen> {
                   heroTag: 'my_location_fab',
                   backgroundColor: Colors.white,
                   elevation: 4,
-                  onPressed: () =>
-                      _mapController.move(_userLoc, 15.5),
+                  onPressed: _goToMyLocation,
                   tooltip: 'My location',
                   child: const Icon(Icons.my_location_rounded,
                       color: AppColors.accent, size: 22),
@@ -231,7 +434,7 @@ class _MapScreenState extends State<MapScreen> {
                   heroTag: 'refresh_fab',
                   backgroundColor: Colors.white,
                   elevation: 4,
-                  onPressed: _loadStations,
+                  onPressed: () => _loadStations(_userLoc ?? _fallback),
                   tooltip: 'Refresh stations',
                   child: const Icon(Icons.refresh_rounded,
                       color: AppColors.primary, size: 22),
@@ -249,9 +452,10 @@ class _MapScreenState extends State<MapScreen> {
 //  Top bar (overlaid on map)
 // ─────────────────────────────────────────────────────────────
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.stationCount});
+  const _TopBar({required this.stationCount, required this.onFilterTap});
 
   final int stationCount;
+  final VoidCallback onFilterTap;
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +517,7 @@ class _TopBar extends StatelessWidget {
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
-            onTap: () {},
+            onTap: onFilterTap,
             child: const Padding(
               padding: EdgeInsets.all(10),
               child: Icon(Icons.tune_rounded,
