@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../../services/wallet_service.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/eco_icons.dart';
 
@@ -217,8 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 30,
                         color: Colors.grey.shade300,
                       ),
-                      const Icon(Icons.refresh_rounded,
-                          color: Color(0xFF1FA971), size: 22),
+                      
                       const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           Text(
-                            'Refills done',
+                            'Total Refills',
                             style: GoogleFonts.poppins(
                               fontSize: 10,
                               color: AppColors.textSecondary,
@@ -582,17 +582,56 @@ class _HomeScreenState extends State<HomeScreen> {
 
 }
 
-// ─── QR Code bottom sheet ─────────────────────────────────────────────────────
+// ─── QR Code dialog ───────────────────────────────────────────────────────────
 
-class _QrSheet extends StatelessWidget {
+class _QrSheet extends StatefulWidget {
   const _QrSheet({required this.user});
 
   final UserModel? user;
 
   @override
+  State<_QrSheet> createState() => _QrSheetState();
+}
+
+class _QrSheetState extends State<_QrSheet> {
+  bool    _isDeducting = false;
+  String? _errorMsg;
+
+  Future<void> _simulateRefill() async {
+    final balance = widget.user?.walletBalance ?? 0;
+    if (balance < 10) {
+      setState(() => _errorMsg = 'Insufficient balance. Please top up your wallet.');
+      return;
+    }
+
+    setState(() { _isDeducting = true; _errorMsg = null; });
+    try {
+      await WalletService.instance.deduct(10);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '₹10 deducted. Enjoy your water! 💧',
+            style: GoogleFonts.poppins(),
+          ),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+    } on InsufficientBalanceException {
+      setState(() => _errorMsg = 'Insufficient balance. Please top up your wallet.');
+    } catch (e) {
+      setState(() => _errorMsg = 'Something went wrong. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isDeducting = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final qrCode = user?.qrCode;
-    final name   = user?.name ?? '';
+    final qrCode  = widget.user?.qrCode;
+    final name    = widget.user?.name ?? '';
+    final balance = widget.user?.walletBalance ?? 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -603,7 +642,7 @@ class _QrSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Close button row
+          // Close button
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
@@ -625,10 +664,7 @@ class _QrSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             name,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 24),
           if (qrCode != null) ...[
@@ -660,19 +696,86 @@ class _QrSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            // Wallet balance indicator
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: balance < 10
+                    ? AppColors.error.withValues(alpha: 0.08)
+                    : AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 16,
+                    color: balance < 10 ? AppColors.error : AppColors.primary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Wallet: ₹${balance.toStringAsFixed(2)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: balance < 10 ? AppColors.error : AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Error message
+            if (_errorMsg != null) ...[
+              Text(
+                _errorMsg!,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  color: AppColors.error,
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            // Simulate Refill button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isDeducting ? null : _simulateRefill,
+                icon: _isDeducting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.water_drop_rounded, size: 18),
+                label: Text(
+                  _isDeducting ? 'Processing...' : 'Simulate Refill  —  ₹10',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1565C0),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.info_outline_rounded,
-                    size: 15, color: AppColors.textHint),
-                const SizedBox(width: 6),
+                    size: 14, color: AppColors.textHint),
+                const SizedBox(width: 5),
                 Text(
                   'Show this at the water station to refill',
                   style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    color: AppColors.textSecondary,
-                  ),
+                      fontSize: 11.5, color: AppColors.textSecondary),
                 ),
               ],
             ),

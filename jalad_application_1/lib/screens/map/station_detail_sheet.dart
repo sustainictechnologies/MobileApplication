@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/water_station.dart';
@@ -66,11 +67,8 @@ class _StationDetailSheetState extends State<StationDetailSheet>
   }
 
   void _switchStation(WaterStation s) {
-    setState(() => _current = s);
-    widget.onStationChanged(s);
-    _gaugeCtrl.reset();
-    _buildFillAnim();
-    _gaugeCtrl.forward();
+    widget.onStationChanged(s); // pans the map to the tapped station
+    Navigator.pop(context);     // closes this sheet
   }
 
   @override
@@ -475,78 +473,45 @@ class _StationDetailSheetState extends State<StationDetailSheet>
     );
   }
 
+  // ── Directions ──────────────────────────────────────────────
+  Future<void> _openDirections() async {
+    final uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&destination=${_current.latitude},${_current.longitude}'
+      '&travelmode=driving',
+    );
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open Google Maps.')),
+        );
+      }
+    }
+  }
+
   // ── Action buttons ──────────────────────────────────────────
   Widget _buildActions() {
-    return Row(
-      children: [
-        // Directions (outline)
-        Expanded(
-          child: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            side: const BorderSide(
-                color: AppColors.primary, width: 1.5),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
-          ).wrap(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.directions_rounded,
-                    size: 18, color: AppColors.primary),
-                const SizedBox(width: 6),
-                Text(
-                  'Directions',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-            onTap: () {},
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: _openDirections,
+        icon: const Icon(Icons.directions_rounded, size: 20, color: Colors.white),
+        label: Text(
+          'Bring Me There',
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
-        const SizedBox(width: 12),
-        // Start Refill (filled)
-        Expanded(
-          flex: 2,
-          child: ElevatedButton(
-            onPressed: _current.isOnline ? () {} : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              disabledBackgroundColor: Colors.grey.shade200,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              elevation: 2,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.play_circle_rounded,
-                  size: 18,
-                  color: _current.isOnline
-                      ? Colors.white
-                      : Colors.grey.shade400,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Start Refill',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: _current.isOnline
-                        ? Colors.white
-                        : Colors.grey.shade400,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14)),
+          elevation: 2,
         ),
-      ],
+      ),
     );
   }
 
@@ -1129,14 +1094,5 @@ class _AmenityChip extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Extension to wrap OutlinedButtonStyle as a button
-// ─────────────────────────────────────────────────────────────
-extension _StyleWrap on ButtonStyle {
-  Widget wrap({required Widget child, required VoidCallback onTap}) {
-    return OutlinedButton(onPressed: onTap, style: this, child: child);
   }
 }

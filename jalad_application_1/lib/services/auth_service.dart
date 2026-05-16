@@ -176,6 +176,16 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── Wallet ──────────────────────────────────────────────────────────────────
+
+  Future<void> updateLocalBalance(double newBalance) async {
+    if (_currentUser == null) return;
+    final updated = _currentUser!.copyWith(walletBalance: newBalance);
+    await _storage.write(key: _userKey, value: jsonEncode(updated.toJson()));
+    _currentUser = updated;
+    notifyListeners();
+  }
+
   // ─── Data ────────────────────────────────────────────────────────────────────
 
   Future<List<RefillRecord>> getRefillHistory() async {

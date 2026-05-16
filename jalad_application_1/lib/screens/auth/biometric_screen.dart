@@ -87,6 +87,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(),
 
@@ -108,6 +109,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
 
               Text(
                 'Welcome back',
+                textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -115,6 +117,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
               const SizedBox(height: 8),
               Text(
                 AuthService.instance.currentUser?.name ?? '',
+                textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -162,6 +165,7 @@ class _BiometricScreenState extends State<BiometricScreen> {
                 _isAuthenticating
                     ? 'Verifying...'
                     : 'Tap to authenticate',
+                textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
