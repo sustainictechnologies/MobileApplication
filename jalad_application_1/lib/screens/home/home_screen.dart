@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/eco_icons.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,8 +16,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final user = AuthService.instance.currentUser;
@@ -39,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: _buildRefillFAB(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 
@@ -121,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 22, 12, 22),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF1FA971), Color(0xFF34D399)],
@@ -130,11 +129,27 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         borderRadius: BorderRadius.circular(22),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
         children: [
-          // Left: text + stats
-          Expanded(
+          // Water drop image floats at top-right — doesn't affect text layout
+          Positioned(
+            right: -8,
+            top: 0,
+            child: Opacity(
+              opacity: 0.92,
+              child: Image.asset(
+                'assets/images/water_drop.png',
+                width: 140,
+                height: 190,
+                fit: BoxFit.contain,
+                alignment: Alignment.topRight,
+              ),
+            ),
+          ),
+          // Text on top — full width, no sharing with image
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -229,15 +244,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Right: water drop image
-          Expanded(
-            child: Image.asset(
-              'assets/images/water_drop.png',
-              fit: BoxFit.cover,
-              height: 200,
             ),
           ),
         ],
@@ -359,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const Co2ReducedIcon(size: 52),
                   const SizedBox(height: 10),
-                  Text(
+                  Text( 
                     '${co2.toStringAsFixed(2)} kg',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
@@ -409,34 +415,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Refill FAB ─────────────────────────────────────────────────────────────
 
+  void _showQrCode(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.all(24),
+        backgroundColor: Colors.transparent,
+        child: _QrSheet(user: AuthService.instance.currentUser),
+      ),
+    );
+  }
+
   Widget _buildRefillFAB(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.map),
+      onTap: () => _showQrCode(context),
       child: Container(
-        width: 78,
-        height: 78,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1565C0),
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFFE1F5FE), Color(0xFF81D4FA)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Color(0x441565C0),
-              blurRadius: 16,
-              offset: Offset(0, 6),
+              color: const Color(0xFF81D4FA).withValues(alpha: 0.55),
+              blurRadius: 18,
+              spreadRadius: 2,
+              offset: const Offset(0, 7),
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.40),
+              blurRadius: 5,
+              offset: const Offset(-2, -2),
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            const Icon(Icons.water_drop_rounded, color: Colors.white, size: 28),
-            const SizedBox(height: 2),
-            Text(
-              'Refill',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+            // Glint highlight
+            Positioned(
+              top: 9,
+              left: 11,
+              child: Container(
+                width: 20,
+                height: 11,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withValues(alpha: 0.38),
+                ),
+              ),
+            ),
+            Center(
+              child: Text(
+                'Refill',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF01579B),
+                ),
               ),
             ),
           ],
@@ -540,54 +580,126 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Bottom nav ─────────────────────────────────────────────────────────────
+}
 
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (i) {
-        setState(() => _currentIndex = i);
-        switch (i) {
-          case 1:
-            Navigator.pushNamed(context, AppRoutes.map);
-            break;
-          case 2:
-            Navigator.pushNamed(context, AppRoutes.history);
-            break;
-          case 3:
-            Navigator.pushNamed(context, AppRoutes.ecoImpact);
-            break;
-        }
-      },
-      selectedItemColor: AppColors.primary,
-      unselectedItemColor: AppColors.textHint,
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: Colors.white,
-      elevation: 12,
-      selectedLabelStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
-      unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home_rounded),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.location_on_outlined),
-          activeIcon: Icon(Icons.location_on_rounded),
-          label: 'Stations',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history_rounded),
-          label: 'History',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.eco_outlined),
-          activeIcon: Icon(Icons.eco_rounded),
-          label: 'Impact',
-        ),
-      ],
+// ─── QR Code bottom sheet ─────────────────────────────────────────────────────
+
+class _QrSheet extends StatelessWidget {
+  const _QrSheet({required this.user});
+
+  final UserModel? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final qrCode = user?.qrCode;
+    final name   = user?.name ?? '';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Close button row
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              icon: const Icon(Icons.close_rounded, color: AppColors.textHint),
+              onPressed: () => Navigator.pop(context),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'My QR Code',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            name,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (qrCode != null) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.shade200, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: QrImageView(
+                data: qrCode,
+                version: QrVersions.auto,
+                size: 220,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: Color(0xFF2E7D32),
+                ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.info_outline_rounded,
+                    size: 15, color: AppColors.textHint),
+                const SizedBox(width: 6),
+                Text(
+                  'Show this at the water station to refill',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const Icon(Icons.qr_code_rounded, size: 80, color: AppColors.textHint),
+            const SizedBox(height: 16),
+            Text(
+              'QR code not available',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please sign out and log in again\nto generate your QR code.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

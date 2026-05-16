@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/eco_icons.dart';
 
 // ─── Environment tab enum ─────────────────────────────────────────────────────
@@ -159,6 +160,7 @@ class _EcoImpactScreenState extends State<EcoImpactScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 3),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 104),

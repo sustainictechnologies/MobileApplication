@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   name                VARCHAR(255)   NOT NULL,
   email               VARCHAR(255)   NOT NULL UNIQUE,
   password_hash       VARCHAR(255)   NOT NULL,
+  qr_code             UUID           NOT NULL DEFAULT gen_random_uuid(),
   avatar_url          TEXT,
   total_litres_saved  NUMERIC(10,2)  NOT NULL DEFAULT 0,
   total_refills       INTEGER        NOT NULL DEFAULT 0,
